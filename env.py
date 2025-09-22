@@ -30,4 +30,4 @@ COUNT = config.getint('modbus', 'COUNT')
 
 if __name__ == '__main__':
     print(f"Modbus配置: PORT={PORT}, BAUDRATE={BAUDRATE}, BYTESIZE={BYTESIZE}, PARITY={PARITY}, STOPBITS={STOPBITS},"
-          f" TIMEOUT={TIMEOUT}, SLAVE_IDS={SLAVE_IDS}")
+          f" TIMEOUT={TIMEOUT}, SLAVE_IDS={SLAVE_IDS}, ADDRESS={ADDRESS}, COUNT={COUNT}")
