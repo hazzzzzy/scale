@@ -1,6 +1,7 @@
 from pymodbus.client import ModbusSerialClient
 
 while True:
+    COM = input('输入串口号(COM口，一般为COM3或COM4，COM3输入3，COM4输入4):')
     endPort = input('输入设备地址号(slave_id，一般10以内，建议输入10):')
     if endPort.isdigit() and 1 < int(endPort) < 256:
         endPort = int(endPort)
@@ -11,7 +12,7 @@ while True:
 passed_slave_ids = []
 
 client = ModbusSerialClient(
-    port="COM3",
+    port=f"COM{COM}",
     baudrate=9600,
     bytesize=8,
     parity='N',  # 无校验
@@ -21,7 +22,7 @@ client = ModbusSerialClient(
 
 if not client.connect():
     print(
-        "串口打开失败，请检查端口是否被占用。\nwindows系统的电脑可以按下 win+q 搜索“设备管理器”，然后查看端口中电子秤是否已经链接上“COM3”串口，如没有显示，检查电子秤与电脑的链接。\n检查无误后重新打开测试软件")
+        f"串口打开失败，请检查端口的连接状态和是否被占用。\nwindows系统的电脑可以按下 win+q 搜索“设备管理器”，然后查看端口中电子秤是否已经链接上“COM{COM}”串口，如没有显示，检查电子秤与电脑的链接。\n检查无误后重新打开测试软件")
 else:
     for sid in range(1, endPort + 1):
         try:
