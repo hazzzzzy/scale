@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='端口测试工具',
+    name='端口测试工具v1.12',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
