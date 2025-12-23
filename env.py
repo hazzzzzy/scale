@@ -28,6 +28,10 @@ SLAVE_IDS = [int(i) for i in config.get('modbus', 'SLAVE_IDS').split(',')]
 ADDRESS = config.getint('modbus', 'ADDRESS')
 COUNT = config.getint('modbus', 'COUNT')
 
+# PRINTER_PORT = config.get('printer', 'PORT')
+# VID = config.get('printer', 'VID')
+# PID = config.get('printer', 'PID')
+
 if __name__ == '__main__':
     print(f"Modbus配置: PORT={PORT}, BAUDRATE={BAUDRATE}, BYTESIZE={BYTESIZE}, PARITY={PARITY}, STOPBITS={STOPBITS},"
           f" TIMEOUT={TIMEOUT}, SLAVE_IDS={SLAVE_IDS}, ADDRESS={ADDRESS}, COUNT={COUNT}")
