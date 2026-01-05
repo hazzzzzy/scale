@@ -5,7 +5,7 @@ from utils import R
 import win32print
 
 
-def zebra_printer(text_content, width_mm=40, height_mm=20):
+def zebra_printer(text_content, width_mm=60, height_mm=10):
     """
     通用斑马打印函数
     :param text_content: 打印内容

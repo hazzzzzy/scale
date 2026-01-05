@@ -25,11 +25,11 @@ def printer():
     interval = request.args.get('interval')
     weight = request.args.get('weight')
     if not interval:
-        return R.failed(msg='缺少区号')
+        return R.failed(msg='缺少区间')
 
     if not weight:
-        return zebra_printer(f'区号：{interval}')
-    return zebra_printer(f'区号：{interval}，重量：{weight}')
+        return zebra_printer(f'区间：{interval}')
+    return zebra_printer(f'区间：{interval}，重量：{weight}')
 
 
 @app.after_request

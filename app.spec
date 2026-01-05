@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='秤与打印机v1.23_40_20',
+    name='秤与打印机v1.23_60_10',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
