@@ -11,9 +11,9 @@ from utils.parse_data import parse_scale_data
 def read_scale(slave_ids=SLAVE_IDS):
     print(f'******************************{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}******************************')
     client, connection = None, None
-    if len(SLAVE_IDS) != 2:
-        print(f"SLAVE_IDS配置错误，必须为2个地址: {SLAVE_IDS}")
-        return R.failed(f"SLAVE_IDS配置错误，必须为2个地址: {SLAVE_IDS}")
+    if len(SLAVE_IDS) < 1:
+        print(f"SLAVE_IDS配置错误，必须大于等于1个地址: {SLAVE_IDS}")
+        return R.failed(f"SLAVE_IDS配置错误，必须大于等于1个地址: {SLAVE_IDS}")
     try:
         # Modbus RTU客户端配置
         client = ModbusSerialClient(
