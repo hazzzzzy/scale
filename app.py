@@ -22,11 +22,12 @@ def printer():
     if request.method == 'OPTIONS':
         return make_response()  # 直接返回空响应，after_request 会自动加头
     interval = request.args.get('interval')
-    if not interval:
+    weight = request.args.get('weight')
+    if not interval or not weight:
         return R.failed(msg='缺少参数')
 
-    # return zebra_printer(f'区间：{interval}')
-    return zebra_printer(interval)
+    return zebra_printer(f'区间：{interval}, 重量：{weight} 克')
+    # return zebra_printer(interval)
 
 
 # @app.after_request

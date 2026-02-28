@@ -1,26 +1,39 @@
 import win32print
 
-
 from utils import R
 
 
-def zebra_printer(text_content):
+def zebra_printer(text_content, width_mm=40, height_mm=20):
+    """
+    通用斑马打印函数
+    :param text_content: 打印内容
+    :param width_mm: 标签宽度 (毫米)
+    :param height_mm: 标签高度 (毫米)
+    """
     printer_name = "ZDesigner ZD888-300dpi ZPL"
 
-    # --- 1. 尺寸定义 (300dpi 下 60mm x 10mm) ---
-    label_w = 709  # 60mm
-    label_h = 118  # 10mm
+    # --- 1. 自动单位换算 (mm -> dots) ---
+    # 300 dpi 设备：1mm ≈ 11.81 dots
+    dots_per_mm = 11.81
 
-    # --- 2. 字体设置 (扁长标签) ---
-    # 高度 70 (约 6mm，留足上下边距，防止打印到纸边缘)
-    # 宽度 50 (设窄一点，因为纸很宽，可以让字稍微紧凑些，容纳更多内容)
-    font_h = 70
-    font_w = 50
+    label_w = int(width_mm * dots_per_mm)
+    label_h = int(height_mm * dots_per_mm)
 
-    # --- 3. 垂直居中计算 ---
-    # (纸高 - 字高) / 2
-    # (118 - 70) / 2 = 24
-    y_pos = 5  # 稍微上移一点点用于视觉修正
+    # --- 2. 动态计算字号 ---
+    # 策略：字体高度占纸张高度的 60%，留出上下空隙
+    # 但为了防止字体过大（比如正方形纸），限制最大字体高度为 150
+    calc_font_h = int(label_h * 0.6)
+    if calc_font_h > 150:
+        calc_font_h = 150
+
+    # 字体宽度设为高度的 60-70%，保持比例
+    calc_font_w = int(calc_font_h * 0.65)
+
+    # --- 3. 动态垂直居中 ---
+    # 公式：(纸高 - 字高) / 2
+    y_pos = int((label_h - calc_font_h) / 2) - 5  # 减5做视觉修正
+    if y_pos < 0:
+        y_pos = 0  # 防止负数
 
     # 构造 ZPL 指令
     # ^XA: 开始
@@ -33,15 +46,15 @@ def zebra_printer(text_content):
     # ^FD...^FS: 填充内容
     # ^XZ: 结束
 
-    # --- 4. ZPL 指令 ---
-    # ^PW472: 关键！必须告诉打印机纸宽是 472，否则居中会偏左
+    # --- 4. 生成 ZPL (支持中文版) ---
     zpl = f"""
         ^XA
+        ^CW1,E:SIMSUN.FNT
         ^PW{label_w}
         ^LL{label_h}
         ^CI28
         ^FO0,{y_pos}
-        ^A0N,{font_h},{font_w}
+        ^A1N,{calc_font_h},{calc_font_w}
         ^FB{label_w},1,0,C,0
         ^FD{text_content}^FS
         ^XZ
