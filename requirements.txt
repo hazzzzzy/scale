@@ -1,0 +1,4 @@
+Flask==2.3.3
+waitress==2.1.2
+pymodbus==3.6.7
+pywin32==306
