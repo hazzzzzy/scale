@@ -45,7 +45,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='称与打印机v1.27',
+    name='称与打印机v1.28',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

@@ -3,7 +3,7 @@ import win32print
 from utils import R
 
 
-def zebra_printer_custom_code(code, width_mm=70, height_mm=20):
+def zebra_printer_custom_code(code, width_mm=50, height_mm=30):
     """
     自定义编码系统专用斑马打印函数
     布局：编码文字在左（分两行显示），二维码在右，垂直居中
