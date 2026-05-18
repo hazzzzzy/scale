@@ -5,86 +5,68 @@ from utils import R
 
 def zebra_printer_custom_code(code, width_mm=50, height_mm=30):
     """
-    自定义编码系统专用斑马打印函数
-    布局：编码文字在左（分两行显示），二维码在右，垂直居中
-    二维码内容 = 编码字符串本身（扫描即得编码）
+    自定义编码标签打印：左侧编码文字 + 右侧二维码，整体垂直居中
 
-    :param code:      15位编码字符串（网页一为原始含X编码，网页三为解析后编码）
-    :param width_mm:  标签宽度（默认70mm）
-    :param height_mm: 标签高度（默认20mm）
+    布局原则：
+    - 文字和二维码都按各自高度做 (label_h - 自身高度) / 2 居中
+    - 字号根据"文本区宽度 / 编码长度"自适应，单行显示
+    - 二维码放大倍数根据标签高度自适应（净尺寸约占标签高度 65%）
+
+    :param code:      编码字符串（长度可变，常见 13-15 位）
+    :param width_mm:  标签宽度（默认 50mm）
+    :param height_mm: 标签高度（默认 30mm）
     """
     printer_name = "ZDesigner ZD888-300dpi ZPL"
 
-    # --- 1. 单位换算 (mm -> dots, 300dpi: 1mm ≈ 11.81 dots) ---
+    # --- 1. 单位换算 (300dpi 下 1mm ≈ 11.81 dots) ---
     dots_per_mm = 11.81
-    label_w = int(width_mm * dots_per_mm)  # 70mm ≈ 827 dots
-    label_h = int(height_mm * dots_per_mm)  # 20mm ≈ 236 dots
+    label_w = int(width_mm * dots_per_mm)   # 50mm ≈ 590 dots
+    label_h = int(height_mm * dots_per_mm)  # 30mm ≈ 354 dots
 
-    # --- 2. 布局计算（左文字右二维码，垂直居中） ---
-    # 根据标签高度调整二维码放大倍数，避免超出边界
-    # 标签高度236点，留上下边距各10点，可用高度约216点
-    # 二维码Version 2矩阵25x25，静区+8格=33x33
-    # 选择放大倍数6：矩阵150点，静区198点，矩阵高度在可用范围内
-    qr_magnification = 6
-    qr_matrix_size = 25 * qr_magnification  # 矩阵尺寸：150点
-    qr_total_size = 33 * qr_magnification   # 含静区：198点
+    # --- 2. 整体安全边距（约 1.2mm，避免贴边） ---
+    margin = max(int(label_w * 0.025), 12)
 
-    # 左右分区：左侧文字区域占40%，右侧二维码区域占60%
-    text_area_width = int(label_w * 0.4)  # 左侧文字区域宽度
-    qr_area_width = label_w - text_area_width  # 右侧二维码区域宽度
+    # --- 3. 二维码：右侧，垂直居中 ---
+    # 模型 2 Version 2 矩阵为 25×25 模块；按 ~65% 标签高度反推放大倍数
+    qr_magnification = max(2, min(10, int(label_h * 0.65) // 25))
+    qr_size = 25 * qr_magnification
 
-    # 计算垂直居中位置
-    # 二维码垂直居中
-    qr_y = int((label_h - qr_matrix_size) / 2)
+    qr_x = label_w - margin - qr_size
+    qr_y = (label_h - qr_size) // 2
 
-    # 文字边距和文本框尺寸
-    text_margin = int(text_area_width * 0.1)  # 左侧留10%边距
-    text_fb_width = int(text_area_width * 0.8)  # 文本框宽度为区域宽度的80%
+    # --- 4. 文字：左侧，单行显示，字号自适应，垂直居中 ---
+    code_len = max(len(code), 1)
+    text_left = margin
+    text_right = qr_x - margin  # 与二维码之间留一个 margin 的间距
+    text_area_w = max(text_right - text_left, 1)
 
-    # 字体尺寸：根据文本框宽度计算，确保15位编码分两行可显示
-    # 文本框宽度 text_fb_width，需要显示15个字符，分两行（8+7）
-    # 每行最大字符数：8个，每个字符需要的宽度 = text_fb_width / 8
-    max_char_width = int(text_fb_width / 8)
-    # 字体高度设为标签高度的18%，但不超过最大字符宽度
-    font_h = min(int(label_h * 0.18), max_char_width)
-    font_w = int(font_h * 0.8)  # 宽度为高度的80%
+    # ^A0 字体高宽比约 1.6:1；按"字符总宽 ≤ 文本区宽度"反推字号，
+    # 0.85 系数预留约 15% 字间距，避免溢出
+    char_slot = text_area_w / code_len
+    font_w = max(int(char_slot * 0.85), 8)
+    font_h = int(font_w * 1.6)
 
-    # 如果计算出的字体宽度仍然大于最大字符宽度，按比例缩小
-    if font_w > max_char_width:
-        scale = max_char_width / font_w
-        font_w = max_char_width
-        font_h = int(font_h * scale)
+    # 字体高度不超过标签高度的 50%，留足上下空间
+    max_font_h = int(label_h * 0.5)
+    if font_h > max_font_h:
+        font_h = max_font_h
+        font_w = max(int(font_h / 1.6), 8)
 
-    # 计算文字垂直位置：使用文本框，顶部与二维码顶部对齐
-    text_y = qr_y
-    # 文本框行数：2行（15位编码分两行显示）
-    text_lines = 2
-    line_spacing = int(font_h * 0.2)  # 行间距为字体高度的20%
+    text_y = (label_h - font_h) // 2
 
-    # 二维码位置：在右侧区域水平居中
-    qr_x = text_area_width + int((qr_area_width - qr_matrix_size) / 2)
-
-    # --- 3. 生成 ZPL ---
-    # 使用 QA (Quality Q) 确保 15 位字符使用 Version 2
-    zpl = f"""^XA
-^CW1,E:SIMSUN.FNT
-^PW{label_w}
-^LL{label_h}
-^CI28
-
-# 左侧编码文字（使用文本框分两行显示）
-^FO{text_margin},{text_y}
-^FB{text_fb_width},{text_lines},{line_spacing},L
-^A0N,{font_h},{font_w}
-^FD{code}^FS
-
-# 右侧二维码
-^FO{qr_x},{qr_y}
-^BQN,2,{qr_magnification}
-^FDQA,{code}^FS
-
-^XZ
-"""
+    # --- 5. 生成 ZPL ---
+    # 关于原代码的几处修正（与渲染异常直接相关）：
+    # 1) 移除 `# xxx` 行：ZPL 不支持 `#` 注释，会被当作未知命令干扰后续字段
+    # 2) 移除 `^CW1,E:SIMSUN.FNT`：编码为英数字，无需中文字体；
+    #    打印机未必内置宋体，强行替换反而触发字体回退
+    # 3) 移除 `^FB ... 2 行` 文本块：实际单行就够，强制双行会让定位偏移
+    zpl = (
+        "^XA"
+        f"^PW{label_w}^LL{label_h}^CI28"
+        f"^FO{text_left},{text_y}^A0N,{font_h},{font_w}^FD{code}^FS"
+        f"^FO{qr_x},{qr_y}^BQN,2,{qr_magnification}^FDQA,{code}^FS"
+        "^XZ"
+    )
 
     try:
         hPrinter = win32print.OpenPrinter(printer_name)
