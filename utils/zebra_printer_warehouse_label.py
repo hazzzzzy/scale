@@ -40,12 +40,12 @@ def zebra_printer_warehouse_label(labels):
     )  # 660 - 160 - 140 - 300 = 60
 
     # 尺寸计算
-    # col1 容"型号"/"箱号"2 字标签；col2 尽量大，放完整 material_name（不省略、不换行）；
-    # col3 放"数量""日期"2 字标签；col4 容缩小后的日期值。
-    col1_w = int(table_w * 0.134)  # ≈120，36 字体"型号"/"箱号"2 字 + 边距
-    col2_w = int(table_w * 0.593)  # ≈531，型号值最大空间，28 字体单行
-    col3_w = int(table_w * 0.106)  # ≈95，36 字体"数量""日期"2 字
-    col4_w = table_w - col1_w - col2_w - col3_w  # ≈150，24 字体日期 10 字符
+    # col1 容"型号"/"箱号"2 字标签(45)；col2 放型号值(40)；
+    # col3 放"数量""日期"2 字标签(45)；col4 加宽以容纳日期值(半角)避免溢出。
+    col1_w = int(table_w * 0.134)  # ≈120，45 字体"型号"/"箱号"2 字 + 边距
+    col2_w = int(table_w * 0.543)  # ≈486，型号值 40 字体（含较长料号）
+    col3_w = int(table_w * 0.123)  # ≈110，45 字体"数量""日期"2 字
+    col4_w = table_w - col1_w - col2_w - col3_w  # ≈180，数量/日期值留足防溢出
 
     c1 = int(table_w / 6)
     c2 = int(table_w / 6 * 2)
@@ -118,19 +118,20 @@ def zebra_printer_warehouse_label(labels):
         zpl.append(f"^FO{x_pos},{header_y_pos+2}^A1N,60,60^FD品检物料点检表^FS")
         zpl.append(f"^FO{x_pos+2},{header_y_pos+2}^A1N,60,60^FD品检物料点检表^FS")
 
-        # 标签字统一 36，值字统一 30，单行显示不换行
-        t_y1 = start_y + (row_h_data - 36) // 2
-        t_y2 = t_y1 + row_h_data
-        zpl.append(f"^FO{margin_x + 15},{t_y1}^A1N,36,36^FD型号^FS")
-        zpl.append(f"^FO{margin_x + 15},{t_y2}^A1N,36,36^FD箱号^FS")
-        # 型号值 material_name：缩小到 28，单行完整显示，不省略
-        zpl.append(f"^FO{x1 + 10},{t_y1}^A1N,28,28^FD{material_name}^FS")
-        zpl.append(f"^FO{x1 + 10},{t_y2}^A1N,30,30^FD{box_no}^FS")
-        zpl.append(f"^FO{x2 + 15},{t_y1}^A1N,36,36^FD数量^FS")
-        zpl.append(f"^FO{x2 + 15},{t_y2}^A1N,36,36^FD日期^FS")
-        zpl.append(f"^FO{x3 + 10},{t_y1}^A1N,30,30^FD{quantity}^FS")
-        # 日期值缩小到 24
-        zpl.append(f"^FO{x3 + 10},{t_y2}^A1N,24,24^FD{print_date}^FS")
+        # 标签字恢复 45；型号/箱号/数量值恢复 40；各值按自身字号在格内垂直居中
+        row1_top = start_y
+        row2_top = start_y + row_h_data
+        ly1 = row1_top + (row_h_data - 45) // 2   # 标签(45)第一行居中
+        ly2 = row2_top + (row_h_data - 45) // 2   # 标签(45)第二行居中
+        zpl.append(f"^FO{margin_x + 15},{ly1}^A1N,45,45^FD型号^FS")
+        zpl.append(f"^FO{margin_x + 15},{ly2}^A1N,45,45^FD箱号^FS")
+        zpl.append(f"^FO{x1 + 10},{row1_top + (row_h_data - 40) // 2}^A1N,40,40^FD{material_name}^FS")
+        zpl.append(f"^FO{x1 + 10},{row2_top + (row_h_data - 40) // 2}^A1N,40,40^FD{box_no}^FS")
+        zpl.append(f"^FO{x2 + 15},{ly1}^A1N,45,45^FD数量^FS")
+        zpl.append(f"^FO{x2 + 15},{ly2}^A1N,45,45^FD日期^FS")
+        zpl.append(f"^FO{x3 + 10},{row1_top + (row_h_data - 40) // 2}^A1N,40,40^FD{quantity}^FS")
+        # 日期值用半角字体 ^A0、字号 32：避免中文全角下 10 字符日期溢出表格
+        zpl.append(f"^FO{x3 + 10},{row2_top + (row_h_data - 32) // 2}^A0N,32,32^FD{print_date}^FS")
 
         item_y1 = item_start_y + (row_h_item - 35) // 2
         for i in range(3):
