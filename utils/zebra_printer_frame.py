@@ -120,8 +120,8 @@ def zebra_printer_frame(
     {_bold_text(text_x, start_y + line_spacing * 3, "打印日期:")}
     ^FO{text_x + 230},{start_y + line_spacing * 3}^A1N,{font_h},{font_w}^FD{formatted_date}^FS
     
-    {_bold_text(text_x, start_y + line_spacing * 4, "15位编码:")}
-    ^FO{text_x + 230},{start_y + line_spacing * 4}^A1N,{font_h},{font_w}^FD{scan_code_str}^FS
+    {_bold_text(text_x, start_y + line_spacing * 4, "SN码:")}
+    ^FO{text_x + 140},{start_y + line_spacing * 4}^A1N,{font_h},{font_w}^FD{scan_code_str}^FS
     
     ^XZ
     """
