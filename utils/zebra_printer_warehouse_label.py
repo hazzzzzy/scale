@@ -65,7 +65,8 @@ def zebra_printer_warehouse_label(labels):
         material_name = label.get("material_name", "")
         quantity = str(label.get("quantity", ""))
         box_no = str(label.get("box_no", "") or "")
-        print_date = label.get("print_date", "")
+        # 日期去掉分隔符，紧凑显示：2026-01-01 -> 20260101
+        print_date = str(label.get("print_date", "") or "").replace("-", "").replace("/", "")
 
         zpl = ["^XA", "^CW1,E:SIMSUN.FNT", f"^PW{label_w}", f"^LL{label_h}", "^CI28"]
 
@@ -130,8 +131,8 @@ def zebra_printer_warehouse_label(labels):
         zpl.append(f"^FO{x2 + 15},{ly1}^A1N,45,45^FD数量^FS")
         zpl.append(f"^FO{x2 + 15},{ly2}^A1N,45,45^FD日期^FS")
         zpl.append(f"^FO{x3 + 10},{row1_top + (row_h_data - 40) // 2}^A1N,40,40^FD{quantity}^FS")
-        # 日期值用半角字体 ^A0、字号 32：避免中文全角下 10 字符日期溢出表格
-        zpl.append(f"^FO{x3 + 10},{row2_top + (row_h_data - 32) // 2}^A0N,32,32^FD{print_date}^FS")
+        # 日期值用半角字体 ^A0、字号 40：去横线后 8 位数字，与其他值字号一致且不溢出
+        zpl.append(f"^FO{x3 + 10},{row2_top + (row_h_data - 40) // 2}^A0N,40,40^FD{print_date}^FS")
 
         item_y1 = item_start_y + (row_h_item - 35) // 2
         for i in range(3):
