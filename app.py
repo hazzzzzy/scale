@@ -6,6 +6,7 @@ from utils.use_modbus import read_scale
 from utils.zebra_printer import zebra_printer
 from utils.zebra_printer_frame import zebra_printer_frame
 from utils.zebra_printer_custom_code import zebra_printer_custom_code
+from utils.zebra_printer_warehouse_label import zebra_printer_warehouse_label
 
 app = Flask(__name__)
 
@@ -29,9 +30,30 @@ def printer():
     if not interval:
         return R.failed(msg="缺少区间")
 
-    if not weight:
+    # weight 经 query string 传来恒为字符串，"0" 也是真值，不能直接用 not weight 判断。
+    # 此处统一把 空 / 非数字 / 数值为 0 都视为"无重量"，只打印区间。
+    try:
+        has_weight = weight is not None and float(weight) != 0
+    except ValueError:
+        has_weight = False
+
+    if not has_weight:
         return zebra_printer(f"区间：{interval}")
     return zebra_printer(f"区间：{interval}，重量：{weight}")
+
+
+@app.route("/warehouse_label_printer", methods=["POST", "OPTIONS"])
+def warehouse_label_printer():
+    if request.method == "OPTIONS":
+        return make_response()
+
+    data = request.get_json()
+    labels = data.get("labels", [])
+    
+    if not labels:
+        return R.failed(msg="缺少标签数据")
+    
+    return zebra_printer_warehouse_label(labels)
 
 
 @app.route("/frame_printer", methods=["POST", "OPTIONS"])
