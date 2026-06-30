@@ -46,7 +46,18 @@ def zebra_printer_frame(
     if len(formatted_date) == 8 and formatted_date.count(".") == 2:
         formatted_date = "20" + formatted_date
 
-    qr_content = f"车种:{_zpl_esc(vehicle_type)}_0D_0A编码:{_zpl_esc(scan_code)}_0D_0A规格:{_zpl_esc(specification)}_0D_0A料号:{_zpl_esc(material_code)}_0D_0A日期:{_zpl_esc(formatted_date)}"
+    # EB300 等无规格机型（规格与料号都为空）：文字行与二维码均省略「规格」「料号」
+    omit_spec = (not str(specification).strip()) and (not str(material_code).strip())
+
+    qr_lines = [
+        f"车种:{_zpl_esc(vehicle_type)}",
+        f"编码:{_zpl_esc(scan_code)}",
+    ]
+    if not omit_spec:
+        qr_lines.append(f"规格:{_zpl_esc(specification)}")
+        qr_lines.append(f"料号:{_zpl_esc(material_code)}")
+    qr_lines.append(f"日期:{_zpl_esc(formatted_date)}")
+    qr_content = "_0D_0A".join(qr_lines)
 
     # 左右布局坐标设定
     # 左侧二维码位置:
@@ -76,6 +87,27 @@ def zebra_printer_frame(
     def _bold_text(x, y, text):
         return f"""^FO{x},{y}^A1N,{font_h},{font_w}^FD{text}^FS
 ^FO{x+2},{y}^A1N,{font_h},{font_w}^FD{text}^FS"""
+
+    # 右侧文本行：(标签, 值, 值的x偏移)。EB300 等无规格机型省略「规格」「料号」两行。
+    rows = [("车种类型:", vehicle_type, 230)]
+    if not omit_spec:
+        rows.append(("规格:", specification, 140))
+        rows.append(("料号:", material_code, 140))
+    rows.append(("打印日期:", formatted_date, 230))
+    rows.append(("SN码:", scan_code_str, 140))
+
+    # 以原 5 行布局的中间行为基准做垂直居中：行数=5 时与原版完全一致，行数变少时整体居中、不留空档。
+    block_center = start_y + line_spacing * 2
+    row_start = block_center - line_spacing * (len(rows) - 1) / 2
+
+    text_blocks = []
+    for i, (label, value, value_offset) in enumerate(rows):
+        y = int(row_start + line_spacing * i)
+        text_blocks.append(_bold_text(text_x, y, label))
+        text_blocks.append(
+            f"^FO{text_x + value_offset},{y}^A1N,{font_h},{font_w}^FD{value}^FS"
+        )
+    right_text = "\n".join(text_blocks)
 
     # --- 3. 生成 ZPL (支持中文版) ---
     zpl = f"""
@@ -108,20 +140,7 @@ def zebra_printer_frame(
     
     ^FO{box_x},{box_y}^GB{box_w},{box_h},3^FS
     
-    {_bold_text(text_x, start_y + line_spacing * 0, "车种类型:")}
-    ^FO{text_x + 230},{start_y + line_spacing * 0}^A1N,{font_h},{font_w}^FD{vehicle_type}^FS
-    
-    {_bold_text(text_x, start_y + line_spacing * 1, "规格:")}
-    ^FO{text_x + 140},{start_y + line_spacing * 1}^A1N,{font_h},{font_w}^FD{specification}^FS
-    
-    {_bold_text(text_x, start_y + line_spacing * 2, "料号:")}
-    ^FO{text_x + 140},{start_y + line_spacing * 2}^A1N,{font_h},{font_w}^FD{material_code}^FS
-    
-    {_bold_text(text_x, start_y + line_spacing * 3, "打印日期:")}
-    ^FO{text_x + 230},{start_y + line_spacing * 3}^A1N,{font_h},{font_w}^FD{formatted_date}^FS
-    
-    {_bold_text(text_x, start_y + line_spacing * 4, "SN码:")}
-    ^FO{text_x + 140},{start_y + line_spacing * 4}^A1N,{font_h},{font_w}^FD{scan_code_str}^FS
+    {right_text}
     
     ^XZ
     """
