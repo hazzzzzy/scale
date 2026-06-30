@@ -6,6 +6,9 @@ import os
 # 获取当前目录路径
 current_dir = os.path.dirname(os.path.abspath('.'))
 
+# 版本号：优先读环境变量 APP_VERSION（供 GitHub Actions 注入），本地默认 1.34
+app_version = os.environ.get('APP_VERSION', '1.34')
+
 a = Analysis(
     ['app.py'],
     pathex=[current_dir],
@@ -46,7 +49,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='称与打印机v1.33',
+    name=f'称与打印机v{app_version}',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
